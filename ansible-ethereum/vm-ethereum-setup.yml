@@ -1,0 +1,6 @@
+---
+- hosts: aws-host
+  become: yes
+  become_method: sudo
+  roles:
+  - ansible-geth 
