@@ -1,0 +1,8 @@
+[defaults]
+
+# some basic default values...
+
+inventory = /Users/mac/Documents/ansible-ethereum-node/inventory
+
+
+host_key_checking = False

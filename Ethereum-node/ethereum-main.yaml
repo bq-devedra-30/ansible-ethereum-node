@@ -1,0 +1,60 @@
+- hosts: aws-host
+  become: yes
+  become_method: sudo
+  tasks:
+  - name: Execute shell command
+    ansible.builtin.shell: sudo add-apt-repository -y ppa:ethereum/ethereum
+
+  - name: Install apache httpd  (state=present is optional)
+    ansible.builtin.apt:
+      name: ethereum-unstable
+      state: present
+  
+  - name: Create Prysm directory
+    file:
+        path: /prysm
+        state: directory
+
+  - name: Download Prysm installation script
+    get_url:
+        url: https://raw.githubusercontent.com/prysmaticlabs/prysm/master/prysm.sh
+        dest: /prysm/prysm.sh
+        mode: '0755'
+
+  - name: Download Goerli network genesis file
+    get_url:
+        url: https://github.com/eth-clients/goerli/blob/main/prater/genesis.ssz
+        dest: /prysm/genesis.ssz
+
+
+  - name: Generate 32 byte hex secret key for authentication
+    command: "/prysm/prysm.sh beacon-chain generate-auth-secret"
+    args:
+        creates: /prysm/jwt.hex
+
+  - name: Start Prysm Beacon Chain
+    command: "/prysm/prysm.sh beacon-chain --http-web3provider=http://43.207.195.199:8551 --jwt-secret=/prysm/jwt.hex --genesis-state=/prysm/genesis.ssz --prater"
+        
+  - name: Create systemd service file for geth
+    template:
+        src: geth.service
+        dest: /etc/systemd/system/geth.service
+    notify:
+        - Reload systemd
+        - Enable geth
+  
+  handlers:
+  - name: Reload systemd
+    systemd:
+        name: geth
+        state: reloaded
+
+  - name: Enable geth
+    systemd:
+        name: geth
+        enabled: yes
+
+  - name: Start geth
+    systemd:
+        name: geth
+        state: started

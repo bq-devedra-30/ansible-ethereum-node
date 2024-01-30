@@ -1,0 +1,13 @@
+[Unit]
+Description=Ethereum Node
+After=network.target
+
+[Service]
+User=$USER
+Type=simple
+ExecStart=/usr/bin/geth --syncmode "snap" --http --http.api=eth,net,web3,engine --http.vhosts * --http.addr 0.0.0.0 --authrpc.jwtsecret=/prysm/jwt.hex --override.terminaltotaldifficulty 50000000000000000
+Restart=on-failure
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
